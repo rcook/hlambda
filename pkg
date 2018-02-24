@@ -1,0 +1,24 @@
+#!/bin/bash
+set -euo pipefail
+
+this_dir=$(cd $(dirname $0); pwd -P)
+
+cd $this_dir
+stack clean
+stack build --fast --test
+
+exe_path=$(stack exec -- which hlambda)
+
+pkg_work_dir=$this_dir/.pkg-work
+input_dir=$pkg_work_dir/input
+output_dir=$pkg_work_dir/output
+rm -rf $pkg_work_dir
+mkdir -p $input_dir
+mkdir -p $output_dir
+
+cp $exe_path $input_dir
+cp $this_dir/resources/index.js $input_dir
+chmod -R 777 $input_dir/*
+
+zip -j $output_dir/hlambda.zip $input_dir/*
+cp $output_dir/hlambda.zip $this_dir
