@@ -28,5 +28,17 @@ executable hlambda
                                             -Werror=missing-methods
                                             -fwarn-unused-imports
   build-depends:                            aeson
+                                          , amazonka
+                                          , amazonka-ssm
+                                          , amazonka-sts
+                                          , aws-via-haskell
                                           , base >= 4.7 && < 5
+                                          , lens
                                           , serverless-haskell
+                                          , text
+  other-modules:                            HLambda.Commands
+                                          , HLambda.Config
+                                          , HLambda.Errors
+                                          , HLambda.Services
+                                          , HLambda.Types
+                                          , HLambda.Util

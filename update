@@ -1,0 +1,22 @@
+#!/bin/bash
+set -euo pipefail
+
+this_dir=$(cd $(dirname $0); pwd -P)
+source ${this_dir}/.env
+package_name=hlambda
+zip_path=${this_dir}/${package_name}.zip
+
+$this_dir/pkg
+
+if [ ! -f ${zip_path} ]; then
+  echo Zip file ${zip_path} does not exist
+  exit 1
+fi
+
+cd ${this_dir}
+echo Invoking AWS CLI
+aws lambda update-function-code \
+  --function-name ${package_name} \
+  --zip-file fileb://${zip_path} \
+  --profile ${profile} \
+  --region ${region}
