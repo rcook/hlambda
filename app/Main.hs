@@ -2,40 +2,58 @@
 
 module Main (main) where
 
-import           AWSLambda (lambdaMain)
-import           Control.Exception (SomeException, bracket_, catch)
 import           Data.Aeson (Value)
+import           Data.Default.Class (def)
+import           Data.Monoid ((<>))
+import           Data.Text (Text)
 import           HLambda.Commands
 import           HLambda.Config
+import           HLambda.FitbitAPI
 import           HLambda.Services
 import           HLambda.Types
 import           HLambda.Util
 import           Network.AWS.Easy (connect)
+import           Network.HTTP.Req
+                    ( (/:)
+                    , (=:)
+                    , GET(..)
+                    , NoReqBody(..)
+                    , https
+                    , jsonResponse
+                    , req
+                    , responseBody
+                    , runReq
+                    )
 
 main :: IO ()
-main =
-    bracket_
-        (logMessage "hlambda started")
-        (logMessage "hlambda stopped")
-        mainInner
-        `catch` (\e -> logMessage $ "Unhandled exception: " ++ show (e :: SomeException))
+main = withLambda $ \event -> do
+    let _ = event :: Value
+    conf <- getAWSConfigFromEnv
 
-mainInner :: IO ()
-mainInner = lambdaMain $ \event -> do
-    conf <- getAWSConfig
+    logMessage "hlambda: Perform web API request"
+    v <- runReq def $
+        req GET (https "httpbin.org" /: "get") NoReqBody jsonResponse $
+                "aaa" =: ("bbb" :: Text) <>
+                "ccc" =: ("ddd" :: Text)
+    print (responseBody v :: Value)
 
+    -- (2) Call AWS STS API
     stsSession <- connect conf stsService
     accountId <- getAccountId stsSession
-    logMessage $ "Account ID: " ++ show accountId
+    logMessage $ "hlambda: Fetched account ID " ++ show accountId
 
+    -- (3) Call AWS SSM APIs
     ssmSession <- connect conf ssmService
+    logMessage "hlambda: Set string parameter"
     setStringParameter
         (ParameterName "/path/to/parameter")
         "hello-world"
         ssmSession
 
-    clientInfo <- getSecureStringParameter (ParameterName "/HLambda/FitbitAPI/ClientInfo") ssmSession
-    logMessage $ "clientInfo=" ++ show clientInfo
+    clientInfo <- getClientInfo ssmSession
+    logMessage $ "hlambda: Fetch client info: " ++ show clientInfo
 
-    print (event :: Value)
-    return ([1, 2, 3] :: [Int])
+    logMessage "hlambda: Set token pair"
+    setTokenPair
+        (TokenPair (AccessToken "foo") (RefreshToken "bar"))
+        ssmSession

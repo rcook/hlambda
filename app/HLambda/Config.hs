@@ -1,27 +1,51 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module HLambda.Config
-    ( getAWSConfig
+    ( getAWSConfigFromEnv
+    , getEnvRegion
+    , getAWSConfig
     ) where
 
-import           Control.Exception (throwIO)
 import           Control.Lens ((&), (.~))
+import           Data.String (IsString)
 import qualified Data.Text as Text (pack)
 import           HLambda.Errors
-import           Network.AWS.Auth (Credentials(..))
+import           HLambda.Util
+import           Network.AWS (Region)
+import           Network.AWS.Auth (AccessKey, Credentials(..), SecretKey)
 import           Network.AWS.Data (fromText)
 import           Network.AWS.Easy (AWSConfig, Endpoint(..), awsConfig, awscCredentials)
 import           System.Environment (getEnv)
 
-getAWSConfig :: IO AWSConfig
-getAWSConfig = do
-    regionStr <- getEnv "AWS_REGION"
-    region <- case fromText (Text.pack regionStr) of
-                Left s -> throwIO (RuntimeError $ "Unrecognized region " ++ regionStr ++ ": " ++ s)
-                Right r -> return r
+awsAccessKeyIdName :: IsString s => s
+awsAccessKeyIdName = "AWS_ACCESS_KEY_ID"
+
+awsSecretAccessKeyName :: IsString s => s
+awsSecretAccessKeyName = "AWS_SECRET_ACCESS_KEY"
+
+awsSessionTokenName :: IsString s => s
+awsSessionTokenName = "AWS_SESSION_TOKEN"
+
+awsRegionName :: IsString s => s
+awsRegionName = "AWS_REGION"
+
+getEnvRegion :: String -> IO Region
+getEnvRegion regionName = do
+    regionStr <- getEnv regionName
+    fromRightIO
+        (\e -> RuntimeError ("Could not parse AWS region " ++ regionStr ++ ": " ++ e))
+        (fromText (Text.pack regionStr))
+
+getAWSConfigFromEnv :: IO AWSConfig
+getAWSConfigFromEnv = do
+    region <- getEnvRegion awsRegionName
     return $ awsConfig (AWSRegion region)
                 & awscCredentials .~ FromEnv
-                                        "AWS_ACCESS_KEY_ID"
-                                        "AWS_SECRET_ACCESS_KEY"
-                                        (Just "AWS_SESSION_TOKEN")
-                                        (Just "AWS_REGION")
+                                        awsAccessKeyIdName
+                                        awsSecretAccessKeyName
+                                        (Just awsSessionTokenName)
+                                        (Just awsRegionName)
+
+getAWSConfig :: Region -> AccessKey -> SecretKey -> AWSConfig
+getAWSConfig region ak sk = awsConfig (AWSRegion region)
+                                & awscCredentials .~ FromKeys ak sk

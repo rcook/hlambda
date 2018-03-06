@@ -33,12 +33,17 @@ executable hlambda
                                           , amazonka-sts
                                           , aws-easy
                                           , base >= 4.7 && < 5
+                                          , data-default-class
                                           , lens
+                                          , req
                                           , serverless-haskell
                                           , text
   other-modules:                            HLambda.Commands
                                           , HLambda.Config
                                           , HLambda.Errors
+                                          , HLambda.FitbitAPI
+                                          , HLambda.FitbitAPI.Commands
+                                          , HLambda.FitbitAPI.Types
                                           , HLambda.Services
                                           , HLambda.Types
                                           , HLambda.Util

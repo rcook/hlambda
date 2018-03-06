@@ -6,4 +6,5 @@ module HLambda.Types
 import           Data.Text (Text)
 
 newtype AccountId = AccountId Text deriving Show
+
 newtype ParameterName = ParameterName Text deriving Show

@@ -1,6 +1,8 @@
 module HLambda.Commands
     ( getAccountId
     , getSecureStringParameter
+    , getStringParameter
+    , setSecureStringParameter
     , setStringParameter
     ) where
 
@@ -12,6 +14,7 @@ import           Data.Text (Text)
 import           HLambda.Errors
 import           HLambda.Services
 import           HLambda.Types
+import           HLambda.Util
 import           Network.AWS (send)
 import           Network.AWS.Easy (withAWS)
 import           Network.AWS.SSM
@@ -29,22 +32,29 @@ import           Network.AWS.STS (gcirsAccount, getCallerIdentity)
 getAccountId :: STSSession -> IO AccountId
 getAccountId = withAWS $ do
     result <- send getCallerIdentity
-    case result ^. gcirsAccount of
-        Just s -> return $ AccountId s
-        Nothing -> liftIO $ throwIO (RuntimeError "Could not retrieve AWS account ID")
+    AccountId <$> fromJustIO (RuntimeError "Could not retrieve AWS account ID") (result ^. gcirsAccount)
 
 getSecureStringParameter :: ParameterName -> SSMSession -> IO Text
 getSecureStringParameter (ParameterName pn) = withAWS $ do
     result <- send (getParameter pn & gWithDecryption .~ Just True)
-    let mbValue = do
-                    p <- result ^. gprsParameter
-                    t <- p ^. pType
-                    case t of
-                        SecureString -> p ^. pValue
-                        _ -> Nothing
-    case mbValue of
-        Nothing -> liftIO $ throwIO (RuntimeError $ "Could not retrieve secure string " ++ show pn)
-        Just value -> return value
+    p <- fromJustIO (RuntimeError $ "Could not get parameter " ++ show pn) (result ^. gprsParameter)
+    t <- fromJustIO (RuntimeError $ "Could not get type for parameter " ++ show pn) (p ^. pType)
+    case t of
+        SecureString -> fromJustIO (RuntimeError $ "Could not get value for parameter " ++ show pn) (p ^. pValue)
+        _ -> liftIO (throwIO (RuntimeError $ "Unxpected parameter type for parameter " ++ show pn))
+
+getStringParameter :: ParameterName -> SSMSession -> IO Text
+getStringParameter (ParameterName pn) = withAWS $ do
+    result <- send (getParameter pn)
+    p <- fromJustIO (RuntimeError $ "Could not get parameter " ++ show pn) (result ^. gprsParameter)
+    t <- fromJustIO (RuntimeError $ "Could not get type for parameter " ++ show pn) (p ^. pType)
+    case t of
+        String -> fromJustIO (RuntimeError $ "Could not get value for parameter " ++ show pn) (p ^. pValue)
+        _ -> liftIO (throwIO (RuntimeError $ "Unxpected parameter type for parameter " ++ show pn))
+
+setSecureStringParameter :: ParameterName -> Text -> SSMSession -> IO ()
+setSecureStringParameter (ParameterName pn) s = withAWS $ do
+    void $ send (putParameter pn s SecureString & ppOverwrite .~ Just True)
 
 setStringParameter :: ParameterName -> Text -> SSMSession -> IO ()
 setStringParameter (ParameterName pn) pv = withAWS $ do
