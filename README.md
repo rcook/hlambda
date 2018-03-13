@@ -2,6 +2,10 @@
 
 Example AWS Lambda function written in Haskell
 
+## Notes
+
+Haskell requires a _lot_ of memory: consider allocating 1 GB of RAM to the Lambda function otherwise it will fail (pretty much silently)
+
 ## Clone repository
 
 ```
