@@ -24,15 +24,18 @@ mainInner :: IO ()
 mainInner = lambdaMain $ \event -> do
     conf <- getAWSConfig
 
-    --stsSession <- connect conf stsService
-    --accountId <- getAccountId stsSession
-    --putStrLn $ "Account ID: " ++ show accountId
+    stsSession <- connect conf stsService
+    accountId <- getAccountId stsSession
+    logMessage $ "Account ID: " ++ show accountId
 
     ssmSession <- connect conf ssmService
-    setParameter
+    setStringParameter
         (ParameterName "/path/to/parameter")
-        (ParameterString "hello-world")
+        "hello-world"
         ssmSession
+
+    clientInfo <- getSecureStringParameter (ParameterName "/HLambda/FitbitAPI/ClientInfo") ssmSession
+    logMessage $ "clientInfo=" ++ show clientInfo
 
     print (event :: Value)
     return ([1, 2, 3] :: [Int])
