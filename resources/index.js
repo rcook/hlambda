@@ -1,6 +1,7 @@
 const { spawn } = require("child_process");
 
 function runCommand(event, callback, commandPath, commandArgs) {
+  process.env["LD_LIBRARY_PATH"] = process.env["LAMBDA_TASK_ROOT"]
   process.env["PATH"] = process.env["PATH"] + ":" + process.env["LAMBDA_TASK_ROOT"];
 
   const main = spawn(commandPath, commandArgs, {
