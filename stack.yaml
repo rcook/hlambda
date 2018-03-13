@@ -1,5 +1,5 @@
 resolver: lts-10.4
 extra-deps:
 - git: https://github.com/rcook/aws-via-haskell.git
-  commit: 8e17fc2ac1610280574034f91348f17a7c2b8ce2
+  commit: 97e5ca71c5523404c0f08e29654df9700e3a4b91
 - serverless-haskell-0.4.1
