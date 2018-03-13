@@ -1,24 +1,75 @@
-#!/bin/bash
-set -euo pipefail
+#!/usr/bin/env ruby
+# -*-ruby-*-
+# vi:syntax=ruby
 
-this_dir=$(cd $(dirname $0); pwd -P)
+require 'fileutils'
+require 'set'
 
-cd $this_dir
-stack clean
-stack build --fast --test
+THIS_DIR = File.expand_path(File.dirname(__FILE__)).freeze
 
-exe_path=$(stack exec -- which hlambda)
+def get_program_path
+  `stack exec -- which hlambda`.strip
+end
 
-pkg_work_dir=$this_dir/.pkg-work
-input_dir=$pkg_work_dir/input
-output_dir=$pkg_work_dir/output
-rm -rf $pkg_work_dir
-mkdir -p $input_dir
-mkdir -p $output_dir
+def read_file_list(path)
+  File
+    .readlines(path)
+    .map(&:strip)
+end
 
-cp $exe_path $input_dir
-cp $this_dir/resources/index.js $input_dir
-chmod -R 777 $input_dir/*
+def get_ignored_deps(this_dir)
+  ignored_deps_path = File.join(this_dir, 'ignored-deps.txt')
+  if File.exist?(ignored_deps_path)
+    read_file_list(ignored_deps_path).to_set
+  else
+    Set.new
+  end
+end
 
-zip -j $output_dir/hlambda.zip $input_dir/*
-cp $output_dir/hlambda.zip $this_dir
+def get_resource_paths(this_dir)
+  manifest_path = File.join(this_dir, 'manifest.txt')
+  read_file_list(manifest_path)
+    .map { |p| File.expand_path(File.join(this_dir, p)) }
+end
+
+def get_all_deps(path)
+  output = `ldd #{path}`
+  output
+    .split(/\n+/)
+    .map(&:strip)
+    .map(&:split)
+    .select { |l| l.size == 4 && l[1] == '=>' }
+    .map { |l| [l[0], l[2]] }
+end
+
+def make_package(this_dir)
+  program_path = get_program_path()
+  ignored_deps = get_ignored_deps(this_dir)
+  deps = get_all_deps(program_path).reject { |f, _| ignored_deps.include?(f) }
+  resource_paths = get_resource_paths(this_dir)
+
+  work_dir = File.join(this_dir, '.pkg-work')
+  input_dir = File.join(work_dir, 'input')
+  output_dir = File.join(work_dir, 'output')
+  FileUtils.remove_dir work_dir
+  FileUtils.mkpath work_dir
+  FileUtils.mkpath input_dir
+  FileUtils.mkpath output_dir
+
+  deps.each do |f, p|
+    FileUtils.cp p, input_dir
+  end
+
+  FileUtils.cp program_path, input_dir
+  resource_paths.each do |p|
+    FileUtils.cp p, input_dir
+  end
+
+  FileUtils.chmod_R 0777, input_dir
+
+  output_path = File.join(output_dir, 'hlambda.zip')
+  `zip -j #{output_path} #{input_dir}/*`
+  FileUtils.cp output_path, this_dir
+end
+
+make_package THIS_DIR

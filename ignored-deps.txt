@@ -1,0 +1,9 @@
+libm.so.6
+libz.so.1
+librt.so.1
+libutil.so.1
+libdl.so.2
+libgmp.so.10
+libpthread.so.0
+libgcc_s.so.1
+libc.so.6
