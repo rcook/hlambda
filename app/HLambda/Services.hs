@@ -10,7 +10,7 @@ module HLambda.Services
     , stsService
     ) where
 
-import           AWSViaHaskell (wrapAWSService)
+import           Network.AWS.Easy (wrapAWSService)
 import           Network.AWS.SSM (ssm)
 import           Network.AWS.STS (sts)
 

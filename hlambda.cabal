@@ -31,7 +31,7 @@ executable hlambda
                                           , amazonka
                                           , amazonka-ssm
                                           , amazonka-sts
-                                          , aws-via-haskell
+                                          , aws-easy
                                           , base >= 4.7 && < 5
                                           , lens
                                           , serverless-haskell

@@ -4,13 +4,13 @@ module HLambda.Config
     ( getAWSConfig
     ) where
 
-import           AWSViaHaskell (AWSConfig, Endpoint(..), awsConfig, awscCredentials)
 import           Control.Exception (throwIO)
 import           Control.Lens ((&), (.~))
 import qualified Data.Text as Text (pack)
 import           HLambda.Errors
 import           Network.AWS.Auth (Credentials(..))
 import           Network.AWS.Data (fromText)
+import           Network.AWS.Easy (AWSConfig, Endpoint(..), awsConfig, awscCredentials)
 import           System.Environment (getEnv)
 
 getAWSConfig :: IO AWSConfig

@@ -4,7 +4,6 @@ module HLambda.Commands
     , setStringParameter
     ) where
 
-import           AWSViaHaskell (withAWS)
 import           Control.Exception (throwIO)
 import           Control.Lens ((&), (.~), (^.))
 import           Control.Monad (void)
@@ -14,6 +13,7 @@ import           HLambda.Errors
 import           HLambda.Services
 import           HLambda.Types
 import           Network.AWS (send)
+import           Network.AWS.Easy (withAWS)
 import           Network.AWS.SSM
                     ( ParameterType(..)
                     , gWithDecryption
