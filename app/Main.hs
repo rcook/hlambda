@@ -1,17 +1,17 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Main (main) where
+module Main (main, main') where
 
 import           Data.Aeson (Value)
 import           Data.Default.Class (def)
 import           Data.Monoid ((<>))
 import           Data.Text (Text)
-import           HLambda.Commands
-import           HLambda.Config
-import           HLambda.FitbitAPI
-import           HLambda.Services
-import           HLambda.Types
-import           HLambda.Util
+import           HLambdaApp.Commands
+import           HLambdaApp.Config
+import           HLambdaApp.FitbitAPI
+import           HLambdaApp.Services
+import           HLambdaApp.Types
+import           HLambdaApp.Util
 import           Network.AWS.Easy (connect)
 import           Network.HTTP.Req
                     ( (/:)
@@ -24,9 +24,13 @@ import           Network.HTTP.Req
                     , responseBody
                     , runReq
                     )
+import           S3Demo (s3Main)
 
 main :: IO ()
-main = withLambda $ \event -> do
+main = s3Main
+
+main' :: IO ()
+main' = withLambda $ \event -> do
     let _ = event :: Value
     conf <- getAWSConfigFromEnv
 

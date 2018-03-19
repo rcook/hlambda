@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module HLambda.FitbitAPI.Commands
+module HLambdaApp.FitbitAPI.Commands
     ( getClientInfo
     , getTokenPair
     , setTokenPair
@@ -10,11 +10,11 @@ import           Control.Exception (throwIO)
 import           Data.Monoid ((<>))
 import           Data.Text (Text)
 import qualified Data.Text as Text (splitOn)
-import           HLambda.Commands
-import           HLambda.Errors
-import           HLambda.FitbitAPI.Types
-import           HLambda.Services
-import           HLambda.Types
+import           HLambdaApp.Commands
+import           HLambdaApp.Errors
+import           HLambdaApp.FitbitAPI.Types
+import           HLambdaApp.Services
+import           HLambdaApp.Types
 
 clientInfoName :: ParameterName
 clientInfoName = ParameterName "/HLambda/FitbitAPI/ClientInfo"

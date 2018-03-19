@@ -1,4 +1,4 @@
-module HLambda.Util
+module HLambdaApp.Util
     ( fromJustIO
     , fromRightIO
     , logMessage

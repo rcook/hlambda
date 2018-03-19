@@ -1,4 +1,4 @@
-module HLambda.FitbitAPI.Types
+module HLambdaApp.FitbitAPI.Types
     ( AccessToken(..)
     , ClientId(..)
     , ClientInfo(..)

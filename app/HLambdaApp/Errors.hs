@@ -1,4 +1,4 @@
-module HLambda.Errors
+module HLambdaApp.Errors
     ( RuntimeError(..)
     ) where
 

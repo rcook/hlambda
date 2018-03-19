@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module HLambda.Config
+module HLambdaApp.Config
     ( getAWSConfigFromEnv
     , getEnvRegion
     , getAWSConfig
@@ -9,8 +9,8 @@ module HLambda.Config
 import           Control.Lens ((&), (.~))
 import           Data.String (IsString)
 import qualified Data.Text as Text (pack)
-import           HLambda.Errors
-import           HLambda.Util
+import           HLambdaApp.Errors
+import           HLambdaApp.Util
 import           Network.AWS (Region)
 import           Network.AWS.Auth (AccessKey, Credentials(..), SecretKey)
 import           Network.AWS.Data (fromText)

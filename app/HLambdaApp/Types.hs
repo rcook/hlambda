@@ -1,4 +1,4 @@
-module HLambda.Types
+module HLambdaApp.Types
     ( AccountId(..)
     , ParameterName(..)
     ) where

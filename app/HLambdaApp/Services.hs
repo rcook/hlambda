@@ -1,7 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeFamilies #-}
 
-module HLambda.Services
+module HLambdaApp.Services
     ( SSMService
     , SSMSession
     , STSService

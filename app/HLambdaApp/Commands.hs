@@ -1,4 +1,4 @@
-module HLambda.Commands
+module HLambdaApp.Commands
     ( getAccountId
     , getSecureStringParameter
     , getStringParameter
@@ -11,10 +11,10 @@ import           Control.Lens ((&), (.~), (^.))
 import           Control.Monad (void)
 import           Control.Monad.IO.Class (liftIO)
 import           Data.Text (Text)
-import           HLambda.Errors
-import           HLambda.Services
-import           HLambda.Types
-import           HLambda.Util
+import           HLambdaApp.Errors
+import           HLambdaApp.Services
+import           HLambdaApp.Types
+import           HLambdaApp.Util
 import           Network.AWS (send)
 import           Network.AWS.Easy (withAWS)
 import           Network.AWS.SSM
