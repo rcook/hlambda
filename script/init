@@ -1,0 +1,43 @@
+#!/bin/bash
+set -euo pipefail
+
+this_dir=$(cd $(dirname $0); pwd -P)
+repo_dir=$(dirname $this_dir)
+
+cd $repo_dir
+
+export LOCALSTACK_HOST=localhost
+
+bucket=my-bucket
+table=my-table
+
+#:<<'COMMENT'
+
+awslocal \
+    s3api \
+    create-bucket \
+    --bucket $bucket
+
+awslocal \
+    s3api \
+    put-object \
+    --bucket $bucket \
+    --key aaa/one.txt \
+    --body $this_dir/one.txt
+
+awslocal \
+    s3api \
+    put-object \
+    --bucket $bucket \
+    --key aaa/two.txt \
+    --body $this_dir/two.txt
+
+awslocal \
+    dynamodb \
+    create-table \
+    --table-name $table \
+    --attribute-definitions \
+    AttributeName=key,AttributeType=S \
+    --key-schema \
+    AttributeName=key,KeyType=HASH \
+    --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5
