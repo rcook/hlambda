@@ -18,19 +18,14 @@ awslocal \
     create-bucket \
     --bucket $bucket
 
-awslocal \
-    s3api \
-    put-object \
-    --bucket $bucket \
-    --key aaa/one.txt \
-    --body $this_dir/one.txt
-
-awslocal \
-    s3api \
-    put-object \
-    --bucket $bucket \
-    --key aaa/two.txt \
-    --body $this_dir/two.txt
+for i in $this_dir/*.txt; do
+  awslocal \
+      s3api \
+      put-object \
+      --bucket $bucket \
+      --key aaa/$(basename $i) \
+      --body $i
+done
 
 awslocal \
     dynamodb \
