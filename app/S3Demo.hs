@@ -5,7 +5,6 @@
 module S3Demo (s3Main) where
 
 import           Control.Monad
-import           Control.Monad.IO.Class
 import           Data.Foldable
 import qualified Data.HashMap.Strict as HashMap
 import           Data.Text (Text)
@@ -18,26 +17,25 @@ import           Network.AWS.S3
 wrapAWSService 'dynamoDB "DynamoDBService" "DynamoDBSession"
 wrapAWSService 's3 "S3Service" "S3Session"
 
-type ContinuationToken = Maybe Text
 newtype TableName = TableName Text deriving Show
 
 data ObjectInfo = ObjectInfo ObjectKey UTCTime ETag deriving Show
 
 getObjectInfos :: BucketName -> S3Session -> IO [ObjectInfo]
-getObjectInfos bn s3Session = getObjectInfosHelper bn Nothing s3Session
-
-getObjectInfosHelper :: BucketName -> ContinuationToken -> S3Session -> IO [ObjectInfo]
-getObjectInfosHelper bn ct s3Session = (flip withAWS) s3Session $ do
-    result <- send $ listObjectsV bn & lContinuationToken .~ ct
-    let keys = map
-                (\x -> ObjectInfo (x ^. oKey) (x ^. oLastModified) (x ^. oETag))
-                (result ^. lrsContents)
-        nextCT = result ^. lrsNextContinuationToken
-    case nextCT of
-        Nothing -> return keys
-        Just _ -> do
-            nextKeys <- liftIO $ getObjectInfosHelper bn nextCT s3Session
-            return $ keys ++ nextKeys
+getObjectInfos bucketName s3Session = concat <$> go Nothing
+    where
+        go ct = do
+            result <- (flip withAWS) s3Session $
+                        send $ listObjectsV bucketName & lContinuationToken .~ ct & lMaxKeys .~ Just 2
+            let objectInfos = map
+                                (\x -> ObjectInfo (x ^. oKey) (x ^. oLastModified) (x ^. oETag))
+                                (result ^. lrsContents)
+                nextCT = result ^. lrsNextContinuationToken
+            case nextCT of
+                Nothing -> return [objectInfos]
+                Just _ -> do
+                    nextObjectInfos <- go nextCT
+                    return $ objectInfos : nextObjectInfos
 
 putObjectInfo :: TableName -> ObjectInfo -> DynamoDBSession -> IO ()
 putObjectInfo (TableName tn) (ObjectInfo key lastModified eTag) = withAWS $ do
@@ -57,5 +55,7 @@ s3Main = do
     s3Session <- connect s3Config s3Service
     objectInfos <- getObjectInfos (BucketName "my-bucket") s3Session
 
+    --for_ objectInfos $ \objectInfo ->
+    --    putObjectInfo (TableName "my-table") objectInfo dynamoDBSession
     for_ objectInfos $ \objectInfo ->
-        putObjectInfo (TableName "my-table") objectInfo dynamoDBSession
+        print objectInfo
