@@ -24,9 +24,10 @@ data ObjectInfo = ObjectInfo ObjectKey UTCTime ETag deriving Show
 getObjectInfos :: BucketName -> S3Session -> IO [ObjectInfo]
 getObjectInfos bucketName s3Session = concat <$> go Nothing
     where
+        go :: Maybe Text -> IO [[ObjectInfo]]
         go ct = do
             result <- (flip withAWS) s3Session $
-                        send $ listObjectsV bucketName & lContinuationToken .~ ct & lMaxKeys .~ Just 2
+                        send $ listObjectsV bucketName & lContinuationToken .~ ct
             let objectInfos = map
                                 (\x -> ObjectInfo (x ^. oKey) (x ^. oLastModified) (x ^. oETag))
                                 (result ^. lrsContents)
@@ -36,6 +37,21 @@ getObjectInfos bucketName s3Session = concat <$> go Nothing
                 Just _ -> do
                     nextObjectInfos <- go nextCT
                     return $ objectInfos : nextObjectInfos
+
+getObjectInfosCPS :: BucketName -> S3Session -> IO [ObjectInfo]
+getObjectInfosCPS bucketName s3Session = concat <$> go Nothing id
+    where
+        go :: Maybe Text -> ([[ObjectInfo]] -> [[ObjectInfo]]) -> IO [[ObjectInfo]]
+        go ct f = do
+            result <- (flip withAWS) s3Session $
+                        send $ listObjectsV bucketName & lContinuationToken .~ ct
+            let objectInfos = map
+                                (\x -> ObjectInfo (x ^. oKey) (x ^. oLastModified) (x ^. oETag))
+                                (result ^. lrsContents)
+                nextCT = result ^. lrsNextContinuationToken
+            case nextCT of
+                Nothing -> return $ f [objectInfos]
+                Just _ -> go nextCT (\nextObjectInfos -> f $ objectInfos : nextObjectInfos)
 
 putObjectInfo :: TableName -> ObjectInfo -> DynamoDBSession -> IO ()
 putObjectInfo (TableName tn) (ObjectInfo key lastModified eTag) = withAWS $ do
@@ -53,7 +69,7 @@ s3Main = do
 
     let s3Config = awsConfig (Local "localhost" 4572)
     s3Session <- connect s3Config s3Service
-    objectInfos <- getObjectInfos (BucketName "my-bucket") s3Session
+    objectInfos <- getObjectInfosCPS (BucketName "my-bucket") s3Session
 
     --for_ objectInfos $ \objectInfo ->
     --    putObjectInfo (TableName "my-table") objectInfo dynamoDBSession
