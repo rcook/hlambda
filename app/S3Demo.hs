@@ -4,13 +4,16 @@
 
 module S3Demo (s3Main) where
 
+import           Control.Lens ((&), (.~), (^.))
 import           Control.Monad
 import           Data.Foldable
 import qualified Data.HashMap.Strict as HashMap
 import           Data.Text (Text)
 import           Data.Time
 import           HLambda (formatTimeISO8601)
+import           Network.AWS (send)
 import           Network.AWS.Easy
+import           Network.AWS.Data (toText)
 import           Network.AWS.DynamoDB
 import           Network.AWS.S3
 
@@ -71,7 +74,5 @@ s3Main = do
     s3Session <- connect s3Config s3Service
     objectInfos <- getObjectInfosCPS (BucketName "my-bucket") s3Session
 
-    --for_ objectInfos $ \objectInfo ->
-    --    putObjectInfo (TableName "my-table") objectInfo dynamoDBSession
     for_ objectInfos $ \objectInfo ->
-        print objectInfo
+        putObjectInfo (TableName "my-table") objectInfo dynamoDBSession

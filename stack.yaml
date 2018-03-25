@@ -1,4 +1,4 @@
 resolver: lts-10.4
 extra-deps:
-- aws-easy-0.1.0.0
+- aws-easy-0.1.0.1
 - serverless-haskell-0.4.1
